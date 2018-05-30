@@ -102,6 +102,7 @@ class Agent:
                 states = []
                 targets = []
                 for (s, a, r, s1, status) in exp_sample:
+                    print(r)
                     states.append(s)
                     if status == IN_GAME:
                         maxq = max([q.predict(np.array([s1])) for q in self.qs1])
@@ -148,7 +149,7 @@ class Agent:
 
     @staticmethod
     def _reward(status):
-        return 1. if status == GOAL else 0
+        return 1. if status == GOAL else 0.
 
     @staticmethod
     def _push(xs, x):
