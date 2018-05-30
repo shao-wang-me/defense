@@ -104,7 +104,7 @@ class Agent:
                 for (s, a, r, s1, status) in exp_sample:
                     states.append(s)
                     if status == IN_GAME:
-                        maxq = max([q.predict(np.array(s1)) for q in self.qs1])
+                        maxq = max([q.predict(np.array([s1])) for q in self.qs1])
                         targets.append(r + self.state['g'] * maxq)
                     else:
                         targets.append(r)
