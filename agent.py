@@ -101,23 +101,24 @@ class Agent:
                     s1 = self.env.getState()
                     r = self._reward(status)
                     self.exp.append((s, a, r, s1, status))
-                idx = np.random.choice(len(self.exp), min(self.state['batch_size'], len(self.exp)))
-                exp_sample = [self.exp[i] for i in idx]
-                states = []
-                targets = []
-                for (s, a, r, s1, status) in exp_sample:
-                    states.append(s)
-                    if status == IN_GAME:
-                        maxq = max([q.predict(np.array([s1])) for q in self.qs1])
-                        maxq = maxq[0][0]
-                        targets.append(r + self.state['g'] * maxq)
-                    else:
-                        targets.append(r)
-                q = self.qs[self.state['actions'].index(a)]
-                q.fit(np.array(states), targets, batch_size=self.state['batch_size'], epochs=self.state['epochs'],
-                      verbose=0)
-                self.state['step'] += 1
-                if self.state['step'] % self.state['update_interval'] == 0:
+                if self.exp:
+                    idx = np.random.choice(len(self.exp), min(self.state['batch_size'], len(self.exp)))
+                    exp_sample = [self.exp[i] for i in idx]
+                    states = []
+                    targets = []
+                    for (s, a, r, s1, status) in exp_sample:
+                        states.append(s)
+                        if status == IN_GAME:
+                            maxq = max([q.predict(np.array([s1])) for q in self.qs1])
+                            maxq = maxq[0][0]
+                            targets.append(r + self.state['g'] * maxq)
+                        else:
+                            targets.append(r)
+                    q = self.qs[self.state['actions'].index(a)]
+                    q.fit(np.array(states), targets, batch_size=self.state['batch_size'], epochs=self.state['epochs'],
+                          verbose=0)
+                    self.state['step'] += 1
+                if self.state['step'] % self.state['update_interval'] == 0 and not self.state['step'] == 0:
                     self._clone()
             print(('Episode %d ended with %s' % (self.state['episode'], self.env.statusToString(status))))
             self.state['episode'] += 1
