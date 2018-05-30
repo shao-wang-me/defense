@@ -102,20 +102,14 @@ class Agent:
                 states = []
                 targets = []
                 for (s, a, r, s1, status) in exp_sample:
-                    print(r)
                     states.append(s)
                     if status == IN_GAME:
                         maxq = max([q.predict(np.array([s1])) for q in self.qs1])
-                        print(maxq)
                         maxq = maxq[0][0]
-                        print(maxq)
                         targets.append(r + self.state['g'] * maxq)
                     else:
                         targets.append(r)
                 q = self.qs[self.state['actions'].index(a)]
-                print(targets)
-                print(np.array(targets))
-                print(np.array(targets).shape)
                 q.fit(np.array(states), targets, batch_size=self.state['batch_size'], epochs=self.state['epochs'])
                 self.state['step'] += 1
                 if self.state['step'] % self.state['update_interval'] == 0:
