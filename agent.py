@@ -114,11 +114,11 @@ class Agent:
                         targets.append(r)
                 q = self.qs[self.state['actions'].index(a)]
                 q.fit(np.array(states), targets, batch_size=self.state['batch_size'], epochs=self.state['epochs'],
-                      verbose=1)
+                      verbose=0)
                 self.state['step'] += 1
                 if self.state['step'] % self.state['update_interval'] == 0:
                     self._clone()
-            print(('Episode %d ended with %s' % (self.state['episode'], hfo.statusToString(status))))
+            print(('Episode %d ended with %s' % (self.state['episode'], self.env.statusToString(status))))
             self.state['episode'] += 1
 
     def save(self):
