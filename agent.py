@@ -82,8 +82,9 @@ class Agent:
 
     def run(self, episodes, test=False):
         eps = 0
-        while eps < episodes:
+        # while eps < episodes:
         # for i in range(episodes):
+        while True:
             status = IN_GAME
             while status == IN_GAME:
                 s = self.env.getState()
