@@ -90,6 +90,10 @@ class Agent:
                     a = random.choice(self.state['actions'])
                 # policy action
                 else:
+                    print(s)
+                    print(s.shape)
+                    print(s.reshape((18,)))
+                    print(s.reshape((18,)).shape)
                     qs = [q.predict(s) for q in self.qs]
                     a = self.state['actions'][qs.index(max(qs))]
                 self.env.act(a)
