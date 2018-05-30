@@ -86,6 +86,7 @@ class Agent:
             while status == IN_GAME:
                 s = self.env.getState()
                 if self.state['team'] == 'base_left' and s[5] == 1:
+                    print('sssssssss')
                     a = MOVE
                 else:
                     # random action
