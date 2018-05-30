@@ -92,13 +92,16 @@ class Agent:
                 else:
                     qs = [q.predict(np.array([s])) for q in self.qs]
                     print(qs)
+                    print(max(qs))
                     a = self.state['actions'][qs.index(max(qs))]
                 self.env.act(a)
                 status = self.env.step()
                 s1 = self.env.getState()
                 r = self._reward(status)
                 self.exp.append((s, a, r, s1, status))
+                print(self.exp)
                 exp_sample = np.random.choice(self.exp, min(self.state['batch_size'], len(self.exp)))
+                print(exp_sample)
                 states = []
                 targets = []
                 for (s, a, r, s1, status) in exp_sample:
