@@ -109,6 +109,9 @@ class Agent:
                     else:
                         targets.append(r)
                 q = self.qs[self.state['actions'].index(a)]
+                print(targets)
+                print(np.array(targets))
+                print(np.array(targets).shape)
                 q.fit(np.array(states), np.array(targets), batch_size=self.state['batch_size'], epochs=self.state['epochs'])
                 self.state['step'] += 1
                 if self.state['step'] % self.state['update_interval'] == 0:
