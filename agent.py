@@ -90,12 +90,7 @@ class Agent:
                     a = random.choice(self.state['actions'])
                 # policy action
                 else:
-                    print(s)
-                    print(s.shape)
-                    print(s.dtype)
-                    print(s.reshape((18,)))
-                    print(s.reshape((18,)).shape)
-                    qs = [q.predict(s) for q in self.qs]
+                    qs = [q.predict(np.array([s])) for q in self.qs]
                     a = self.state['actions'][qs.index(max(qs))]
                 self.env.act(a)
                 status = self.env.step()
@@ -108,7 +103,7 @@ class Agent:
                 for (s, a, r, s1, status) in exp_sample:
                     states.append(s)
                     if status == IN_GAME:
-                        maxq = max([q.predict(s1) for q in self.qs1])
+                        maxq = max([q.predict(np.array(s1)) for q in self.qs1])
                         targets.append(r + self.state['g'] * maxq)
                     else:
                         targets.append(r)
