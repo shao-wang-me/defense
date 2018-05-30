@@ -91,6 +91,7 @@ class Agent:
                 # policy action
                 else:
                     qs = [q.predict(np.array([s])) for q in self.qs]
+                    print(qs)
                     a = self.state['actions'][qs.index(max(qs))]
                 self.env.act(a)
                 status = self.env.step()
@@ -148,7 +149,7 @@ class Agent:
 
     @staticmethod
     def _push(xs, x):
-        xs[1:] = xs[-1:]
+        xs[1:] = xs[:-1]
         xs[0] = x
 
 
