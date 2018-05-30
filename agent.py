@@ -92,6 +92,7 @@ class Agent:
                 else:
                     print(s)
                     print(s.shape)
+                    print(s.dtype)
                     print(s.reshape((18,)))
                     print(s.reshape((18,)).shape)
                     qs = [q.predict(s) for q in self.qs]
