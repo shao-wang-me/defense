@@ -124,6 +124,7 @@ class Agent:
                     self._clone()
             print(('Episode %d ended with %s' % (self.state['episode'], self.env.statusToString(status))))
             self.state['episode'] += 1
+            eps += 1
             if status == SERVER_DOWN:
                 self.env.act(QUIT)
                 exit()
