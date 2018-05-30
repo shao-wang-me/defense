@@ -96,8 +96,8 @@ class Agent:
                         qs = [q.predict(np.array([s])) for q in self.qs]
                         a = self.state['actions'][qs.index(max(qs))]
                 self.env.act(a)
-                if not a == MOVE:
-                    status = self.env.step()
+                status = self.env.step()
+                if not (self.state['team'] == 'base_left' and a == MOVE):
                     s1 = self.env.getState()
                     r = self._reward(status)
                     self.exp.append((s, a, r, s1, status))
