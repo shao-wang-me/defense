@@ -97,7 +97,7 @@ class Agent:
                 status = self.env.step()
                 s1 = self.env.getState()
                 r = self._reward(status)
-                self._push(self.exp, (s, a, r, s1, status))
+                self.exp.append((s, a, r, s1, status))
                 exp_sample = np.random.choice(self.exp, min(self.state['batch_size'], len(self.exp)))
                 states = []
                 targets = []
