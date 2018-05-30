@@ -81,7 +81,9 @@ class Agent:
             self.exp = deque(maxlen=self.state['exp_len'])
 
     def run(self, episodes, test=False):
-        for i in range(episodes):
+        eps = 0
+        while eps < episodes:
+        # for i in range(episodes):
             status = IN_GAME
             while status == IN_GAME:
                 s = self.env.getState()
@@ -122,6 +124,9 @@ class Agent:
                     self._clone()
             print(('Episode %d ended with %s' % (self.state['episode'], self.env.statusToString(status))))
             self.state['episode'] += 1
+            if status == SERVER_DOWN:
+                self.env.act(QUIT)
+                exit()
 
     def save(self):
         # save state
