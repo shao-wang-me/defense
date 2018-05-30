@@ -85,13 +85,16 @@ class Agent:
             status = IN_GAME
             while status == IN_GAME:
                 s = self.env.getState()
-                # random action
-                if random.uniform(0, 100) <= self._e():
-                    a = random.choice(self.state['actions'])
-                # policy action
+                if self.state['team'] == 'base_left' and s[5] == 0:
+                    a = MOVE
                 else:
-                    qs = [q.predict(np.array([s])) for q in self.qs]
-                    a = self.state['actions'][qs.index(max(qs))]
+                    # random action
+                    if random.uniform(0, 100) <= self._e():
+                        a = random.choice(self.state['actions'])
+                    # policy action
+                    else:
+                        qs = [q.predict(np.array([s])) for q in self.qs]
+                        a = self.state['actions'][qs.index(max(qs))]
                 self.env.act(a)
                 status = self.env.step()
                 s1 = self.env.getState()
@@ -110,11 +113,13 @@ class Agent:
                     else:
                         targets.append(r)
                 q = self.qs[self.state['actions'].index(a)]
-                q.fit(np.array(states), targets, batch_size=self.state['batch_size'], epochs=self.state['epochs'])
+                q.fit(np.array(states), targets, batch_size=self.state['batch_size'], epochs=self.state['epochs'],
+                      verbose=1)
                 self.state['step'] += 1
                 if self.state['step'] % self.state['update_interval'] == 0:
                     self._clone()
-        self.state['episode'] += 1
+            print(('Episode %d ended with %s' % (self.state['episode'], hfo.statusToString(status))))
+            self.state['episode'] += 1
 
     def save(self):
         # save state
