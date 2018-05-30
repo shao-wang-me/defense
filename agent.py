@@ -100,6 +100,7 @@ class Agent:
                 r = self._reward(status)
                 self.exp.append((s, a, r, s1, status))
                 print(self.exp)
+                print(len(self.exp))
                 exp_sample = np.random.choice(self.exp, min(self.state['batch_size'], len(self.exp)))
                 print(exp_sample)
                 states = []
