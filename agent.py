@@ -167,7 +167,7 @@ def main():
         ag = Agent(file=file)
     else:
         ag = Agent('base_left')
-    ag.run(100)
+    ag.run(2)
     ag.save()
 
 
