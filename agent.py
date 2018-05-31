@@ -112,7 +112,10 @@ class Agent:
                     for (s, a, r, s1, status) in exp_sample:
                         states.append(s)
                         if status == IN_GAME:
-                            maxq = max([q.predict(np.array([s1])) for q in self.qs1])
+                            qs = [q.preidct(np.array([s1])) for q in self.qs]
+                            maxa_idx = qs.index(max(qs))
+                            maxq = self.qs1[maxa_idx].predict(s1)
+                            # maxq = max([q.predict(np.array([s1])) for q in self.qs1])
                             maxq = maxq[0][0]
                             targets.append(r + self.state['g'] * maxq)
                         else:
@@ -123,6 +126,7 @@ class Agent:
                     self.state['step'] += 1
                 if self.state['step'] % self.state['update_interval'] == 0 and not self.state['step'] == 0:
                     self._clone()
+                    print('Step ' + self.state['step'] + ', network cloned.')
             print(('Episode %d ended with %s' % (self.state['episode'], self.env.statusToString(status))))
             self.state['episode'] += 1
             eps += 1
