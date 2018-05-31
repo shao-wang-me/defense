@@ -114,7 +114,7 @@ class Agent:
                         if status == IN_GAME:
                             qs = [q.predict(np.array([s1])) for q in self.qs]
                             maxa_idx = qs.index(max(qs))
-                            maxq = self.qs1[maxa_idx].predict(s1)
+                            maxq = self.qs1[maxa_idx].predict(np.array([s1]))
                             # maxq = max([q.predict(np.array([s1])) for q in self.qs1])
                             maxq = maxq[0][0]
                             targets.append(r + self.state['g'] * maxq)
