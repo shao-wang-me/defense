@@ -112,7 +112,7 @@ class Agent:
                     for (s, a, r, s1, status) in exp_sample:
                         states.append(s)
                         if status == IN_GAME:
-                            qs = [q.preidct(np.array([s1])) for q in self.qs]
+                            qs = [q.predict(np.array([s1])) for q in self.qs]
                             maxa_idx = qs.index(max(qs))
                             maxq = self.qs1[maxa_idx].predict(s1)
                             # maxq = max([q.predict(np.array([s1])) for q in self.qs1])
