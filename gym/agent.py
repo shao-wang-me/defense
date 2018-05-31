@@ -6,7 +6,9 @@ from os.path import isfile
 from keras.models import clone_model, load_model, Model
 from keras.layers import Dense, Activation, Input
 
-from hfo import *
+import gym
+
+# from hfo import *
 
 
 class Agent:
@@ -26,8 +28,8 @@ class Agent:
             with open(self.state['exp_file']) as f:
                 self.exp = pickle.load(f)
             # connect to server
-            self.env = HFOEnvironment()
-            self.env.connectToServer(feature_set=HIGH_LEVEL_FEATURE_SET, team_name=self.state['team'])
+            self.env = gym.make('Pong-ram-v0')
+            self.env.reset()
         else:  # new
             # initialize state
             self.state = {'state_file': 'state.json',
@@ -57,8 +59,8 @@ class Agent:
                 self.state['tnet_files'].append('target_net' + str(i) + '.h5')
 
             # connect to server
-            self.env = HFOEnvironment()
-            self.env.connectToServer(feature_set=HIGH_LEVEL_FEATURE_SET, team_name=team)
+            self.env = gym.make('Pong-raw-v0')
+            self.env.reset()
 
             # set input_dim
             self.state['input_dim'] = self.env.getStateSize()
@@ -126,7 +128,7 @@ class Agent:
                     self.state['step'] += 1
                 if self.state['step'] % self.state['update_interval'] == 0 and not self.state['step'] == 0:
                     self._clone()
-                    print('Step ' + str(self.state['step']) + ', network cloned.')
+                    print('Step ' + self.state['step'] + ', network cloned.')
             print(('Episode %d ended with %s' % (self.state['episode'], self.env.statusToString(status))))
             self.state['episode'] += 1
             eps += 1
