@@ -3,12 +3,58 @@ import random
 import json
 from collections import deque
 from os.path import isfile
+import numpy as np
 from keras.models import clone_model, load_model, Model
 from keras.layers import Dense, Activation, Input
 
-import gym
+IN_GAME = False
 
-# from hfo import *
+
+class Basic():
+    def __init__(self):
+        self.observation = None
+        self.value = None
+        self.done = None
+        self.a = None
+        self.reset()
+
+    def reset(self):
+        self.value = random.randint(1, 10)
+        v = self.value
+        self.observation = [v, v, v]
+        self.done = False
+        print(self.observation)
+
+    def getStateSize(self):
+        return 3
+
+    def getState(self):
+        return self.observation
+
+    def act(self, a):
+        self.a = a
+
+    def step(self):
+        if self.a == 0:
+            self.value = max(1, self.value - 1)
+        if self.a == 1:
+            self.value = min(10, self.value + 1)
+        v = self.value
+        minv = self.observation[0]
+        maxv = self.observation[2]
+        self.observation[0] = min(minv, v)
+        self.observation[1] = v
+        self.observation[2] = max(maxv, v)
+        print(self.observation)
+        if self.observation[0] == 1 and self.observation[2] == 10:
+            self.done = True
+        return self.done
+
+    def getReward(self):
+        if self.done:
+            return 1.
+        else:
+            return 0.
 
 
 class Agent:
@@ -28,8 +74,8 @@ class Agent:
             with open(self.state['exp_file']) as f:
                 self.exp = pickle.load(f)
             # connect to server
-            self.env = gym.make('Pong-ram-v0')
-            self.env.reset()
+            self.env = Basic()
+
         else:  # new
             # initialize state
             self.state = {'state_file': 'state.json',
@@ -41,29 +87,26 @@ class Agent:
                           'g': 0.99,
                           'batch_size': 32,
                           'epochs': 1,
-                          'update_interval': 10000,
+                          'update_interval': 1000,
                           'end_e': 0.01,
-                          'start_e': 1.,
-                          'step_end_e': 1000000,
+                          'start_e': 0.2,
+                          'step_end_e': 1000,
                           'exp_len': 1000000,
                           'team': team
                           }
-            if team == 'base_left':
-                self.state['actions'] = [DRIBBLE, SHOOT]
-            elif team == 'base_right':
-                self.state['actions'] = [MOVE, DEFEND_GOAL, REDUCE_ANGLE_TO_GOAL, GO_TO_BALL, MARK_PLAYER]
+
+            # connect to server
+            self.env = Basic()
+
+            # set input_dim
+            self.state['input_dim'] = self.env.getStateSize()
+
+            self.state['actions'] = [0, 1]
             self.state['output_dim'] = len(self.state['actions'])
 
             for i in range(self.state['output_dim']):
                 self.state['net_files'].append('net' + str(i) + '.h5')
                 self.state['tnet_files'].append('target_net' + str(i) + '.h5')
-
-            # connect to server
-            self.env = gym.make('Pong-raw-v0')
-            self.env.reset()
-
-            # set input_dim
-            self.state['input_dim'] = self.env.getStateSize()
 
             # initialize networks
             # input: state
@@ -82,59 +125,60 @@ class Agent:
             # initialize experience
             self.exp = deque(maxlen=self.state['exp_len'])
 
+    def _train(self, exp_sample):
+        states = []
+        targets = []
+        for (s, a, r, s1, done) in exp_sample:
+            states.append(s)
+            if not done:
+                qs = [q.predict(np.array([s1])) for q in self.qs]
+                maxa_idx = qs.index(max(qs))
+                maxq = self.qs1[maxa_idx].predict(np.array([s1]))
+                maxq = maxq[0][0]
+                targets.append(r + self.state['g'] * maxq)
+            else:
+                targets.append(r)
+        q = self.qs[self.state['actions'].index(a)]
+        q.fit(np.array(states), targets, batch_size=self.state['batch_size'], epochs=self.state['epochs'],
+              verbose=0)
+
     def run(self, episodes, test=False):
         eps = 0
-        # while eps < episodes:
-        # for i in range(episodes):
+        steps = 0
+        rewards = 0.
         while True:
-            status = IN_GAME
-            while status == IN_GAME:
-                s = self.env.getState()
-                if self.state['team'] == 'base_left' and s[5] < 0.:
-                    a = MOVE
-                else:
-                    # random action
-                    if random.uniform(0, 100) <= self._e():
-                        a = random.choice(self.state['actions'])
-                    # policy action
-                    else:
-                        qs = [q.predict(np.array([s])) for q in self.qs]
-                        a = self.state['actions'][qs.index(max(qs))]
-                self.env.act(a)
-                status = self.env.step()
-                if not (self.state['team'] == 'base_left' and a == MOVE):
-                    s1 = self.env.getState()
-                    r = self._reward(status)
-                    self.exp.append((s, a, r, s1, status))
-                if self.exp:
-                    idx = np.random.choice(len(self.exp), min(self.state['batch_size'], len(self.exp)))
-                    exp_sample = [self.exp[i] for i in idx]
-                    states = []
-                    targets = []
-                    for (s, a, r, s1, status) in exp_sample:
-                        states.append(s)
-                        if status == IN_GAME:
-                            qs = [q.predict(np.array([s1])) for q in self.qs]
-                            maxa_idx = qs.index(max(qs))
-                            maxq = self.qs1[maxa_idx].predict(np.array([s1]))
-                            # maxq = max([q.predict(np.array([s1])) for q in self.qs1])
-                            maxq = maxq[0][0]
-                            targets.append(r + self.state['g'] * maxq)
-                        else:
-                            targets.append(r)
-                    q = self.qs[self.state['actions'].index(a)]
-                    q.fit(np.array(states), targets, batch_size=self.state['batch_size'], epochs=self.state['epochs'],
-                          verbose=0)
-                    self.state['step'] += 1
-                if self.state['step'] % self.state['update_interval'] == 0 and not self.state['step'] == 0:
-                    self._clone()
-                    print('Step ' + self.state['step'] + ', network cloned.')
-            print(('Episode %d ended with %s' % (self.state['episode'], self.env.statusToString(status))))
-            self.state['episode'] += 1
-            eps += 1
-            if status == SERVER_DOWN:
-                self.env.act(QUIT)
-                exit()
+            steps += 1
+            s = self.env.getState()
+            if random.uniform(0, 1) <= self._e():
+                a = random.choice(self.state['actions'])
+            # policy action
+            else:
+                qs = [q.predict(np.array([s])) for q in self.qs]
+                a = self.state['actions'][qs.index(max(qs))]
+            self.env.act(a)
+            done = self.env.step()
+            done1 = done
+            s1 = self.env.getState()
+            r = self.env.getReward()
+            rewards += r
+            self.exp.append((s, a, r, s1, done))
+            if self.exp:
+                idx = np.random.choice(len(self.exp), min(self.state['batch_size'], len(self.exp)))
+                exp_sample = [self.exp[i] for i in idx]
+                self._train(exp_sample)
+                self.state['step'] += 1
+            if self.state['step'] % self.state['update_interval'] == 0 and not self.state['step'] == 0:
+                self._clone()
+                print('Step ' + str(self.state['step']) + ', network cloned.')
+            if not done == done1:
+                print('Really!?')
+            if done:
+                self.state['episode'] += 1
+                eps += 1
+                print('Steps =', steps, 'Episode', str(eps), 'done!')
+                rewards = 0.
+                steps = 0
+                self.env.reset()
 
     def save(self):
         # save state
@@ -158,20 +202,11 @@ class Agent:
             self.qs1.append(q1)
 
     def _e(self):
-        if self.state['episode'] >= self.state['step_end_e']:
+        if self.state['step'] >= self.state['step_end_e']:
             return self.state['end_e']
         else:
             return self.state['start_e'] - (self.state['start_e'] - self.state['end_e']) / self.state['step_end_e'] * \
-                   self.state['episode']
-
-    @staticmethod
-    def _reward(status):
-        return 1. if status == GOAL else 0.
-
-    @staticmethod
-    def _push(xs, x):
-        xs[1:] = xs[:-1]
-        xs[0] = x
+                   self.state['step']
 
 
 def main():
